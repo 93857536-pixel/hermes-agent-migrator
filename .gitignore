@@ -1,0 +1,7 @@
+target/
+*.hermesmig
+.DS_Store
+node_modules/
+*.log
+gui/dist
+gui/src-tauri/gen

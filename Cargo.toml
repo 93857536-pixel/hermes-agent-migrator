@@ -1,0 +1,33 @@
+[workspace]
+members = [
+    "crates/migrator-core",
+    "crates/hermes-migrator-cli",
+    "gui/src-tauri",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/93857536-pixel/hermes-agent-migrator"
+authors = ["Hermes Agent Migrator Contributors"]
+
+[workspace.dependencies]
+migrator-core = { path = "crates/migrator-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+sha2 = "0.10"
+flate2 = "1"
+zip = "2"
+aes-gcm = "0.10"
+argon2 = "0.5"
+dirs = "6"
+tracing = "0.1"
+
+[profile.release]
+lto = "thin"
+strip = "debuginfo"

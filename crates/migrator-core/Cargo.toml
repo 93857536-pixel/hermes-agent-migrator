@@ -1,0 +1,27 @@
+[package]
+name = "migrator-core"
+description = "Core migration engine for Hermes Agent Migrator: scanning, packaging, restore, verification, secrets."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "migrator_core"
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+flate2.workspace = true
+zip = { workspace = true }
+aes-gcm.workspace = true
+argon2.workspace = true
+dirs.workspace = true
+rand = "0.8"
+rand_core = "0.6"
+
+[dev-dependencies]
+tempfile = "3"

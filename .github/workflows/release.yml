@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build + Release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend deps
+        working-directory: gui
+        run: npm ci
+
+      - name: Frontend build
+        working-directory: gui
+        run: npm run build
+
+      - name: Install tauri-cli
+        run: cargo install tauri-cli --version '^2' --locked
+
+      - name: Tauri build
+        working-directory: gui
+        run: cargo tauri build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: target/release/bundle/**
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create release with installers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist
+          # Windows: NSIS installer + portable; macOS: DMG
+          find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.dmg' -o -name '*.AppImage' \) -exec cp -f {} dist/ \;
+          ls -lh dist/
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }} — Hermes Agent Migrator" \
+            --notes "Hermes Agent Migrator ${{ github.ref_name }}. Download the installer for your platform (Windows: .exe NSIS; macOS: .dmg)." \
+            --target "${{ github.ref_name }}" \
+            dist/*

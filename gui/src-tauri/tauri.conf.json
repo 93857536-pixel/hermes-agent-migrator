@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Hermes Agent Migrator",
+  "version": "0.1.0",
+  "identifier": "com.hermes.migrator",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Hermes Agent Migrator",
+        "width": 960,
+        "height": 720,
+        "minWidth": 720,
+        "minHeight": 560,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ],
+    "category": "Utility",
+    "shortDescription": "Migrate your Hermes Agent environment between machines",
+    "longDescription": "Hermes Agent Migrator scans, packages, and restores your Hermes Agent configuration and user data as a portable .hermesmig file.",
+    "macOS": {
+      "signingIdentity": null
+    }
+  }
+}

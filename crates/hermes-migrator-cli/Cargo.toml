@@ -1,0 +1,18 @@
+[package]
+name = "hermes-migrator-cli"
+description = "Command-line interface to the Hermes Agent Migrator core."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "hermes-migrator"
+path = "src/main.rs"
+
+[dependencies]
+migrator-core.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+dirs.workspace = true
