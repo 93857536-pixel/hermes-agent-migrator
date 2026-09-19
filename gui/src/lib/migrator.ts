@@ -98,6 +98,28 @@ export interface ProgressEvt {
   total: number;
 }
 
+// ---- Cloud (one device, one configuration) --------------------------------
+
+export interface CloudStatus {
+  device_id_masked: string;
+  has_configuration: boolean;
+  sha256: string | null;
+  size_bytes: number;
+  uploaded_at_ms: number;
+}
+
+export interface ConnTest {
+  reachable: boolean;
+  api_version: number;
+  latency_ms: number;
+  device_id_masked: string;
+}
+
+export interface CloudRestoreDone {
+  package_path: string;
+  report: RestoreReport;
+}
+
 export function fmtBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;

@@ -14,6 +14,8 @@ use migrator_core::scan;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
+pub mod cloud;
+
 /// Progress event payload. Mirrors `ProgressEvt` on the frontend.
 #[derive(Debug, Clone, Serialize)]
 struct ProgressEvt {
@@ -39,7 +41,7 @@ pub struct RestoreDone {
 /// Bridge an `mpsc` channel to Tauri progress events. The core engine expects
 /// a `&mut Box<dyn FnMut(&str, u8, u64, u64)>`; we hand it a sender that
 /// forwards into a channel consumed by a spawned emitter thread.
-fn progress_fn(app: &AppHandle) -> pack::ProgressFn {
+pub(crate) fn progress_fn(app: &AppHandle) -> pack::ProgressFn {
     let (tx, rx) = mpsc::channel::<ProgressEvt>();
     let app2 = app.clone();
     std::thread::spawn(move || {

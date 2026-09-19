@@ -1,14 +1,20 @@
 import { createContext, useContext, useState } from "react";
 
-export type Lang = "en" | "zh";
+export type Lang = "en" | "zh" | "zh-TW";
 
 const dict: Record<Lang, Record<string, string>> = {
   en: {
+    // ---- app / shell ----
     "app.title": "Hermes Agent Migrator",
     "app.tagline": "Move your Hermes environment anywhere, effortlessly.",
+    "app.welcome": "Welcome to Hermes Agent Migrator",
     "nav.scan": "Scan",
     "nav.pack": "Package",
     "nav.restore": "Restore",
+    "nav.cloud": "Cloud",
+    "nav.settings": "Settings",
+
+    // ---- scan ----
     "scan.title": "Scan your environment",
     "scan.subtitle": "Detect your Hermes Agent installation and user data.",
     "scan.run": "Run scan",
@@ -32,6 +38,8 @@ const dict: Record<Lang, Record<string, string>> = {
     "comp.pastes": "Pastes",
     "comp.secrets": "Secrets",
     "comp.application": "Application",
+
+    // ---- pack ----
     "pack.title": "Create a migration package",
     "pack.subtitle": "Bundle your configuration and user data into one portable file.",
     "pack.select": "What to include",
@@ -44,6 +52,8 @@ const dict: Record<Lang, Record<string, string>> = {
     "pack.creating": "Packaging…",
     "pack.done": "Migration complete",
     "pack.done_help": "Transfer this file to the target machine and run Restore.",
+
+    // ---- restore ----
     "restore.title": "Restore a migration package",
     "restore.subtitle": "Open a .hermesmig file and restore it onto this machine.",
     "restore.choose": "Choose package",
@@ -59,18 +69,103 @@ const dict: Record<Lang, Record<string, string>> = {
     "restore.rolled_back": "Verification failed — previous state restored",
     "restore.secret_passphrase": "Passphrase",
     "restore.path_repair": "Rewrite absolute paths to this machine",
+
+    // ---- cloud ----
+    "cloud.title": "Cloud Configuration",
+    "cloud.subtitle": "Store one encrypted configuration per device.",
+    "cloud.has_title": "Configuration Available",
+    "cloud.last_updated": "Last Updated",
+    "cloud.storage": "Storage",
+    "cloud.device": "Device",
+    "cloud.overwrite": "Overwrite Configuration",
+    "cloud.download_restore": "Download & Restore",
+    "cloud.delete": "Delete Configuration",
+    "cloud.no_title": "No cloud configuration found",
+    "cloud.no_body": "Your encrypted configuration can be securely uploaded to the cloud.",
+    "cloud.upload": "Upload Configuration",
+    "cloud.existing_title": "Existing Configuration Found",
+    "cloud.existing_body": "This device already has a cloud configuration.\nYou cannot create another configuration while the current one exists.\nYou can either overwrite the existing configuration or delete it first.",
+    "cloud.overwrite_confirm_title": "Overwrite Configuration?",
+    "cloud.overwrite_confirm_body": "The current cloud configuration will be replaced by the new encrypted configuration.\nThe previous configuration will not be kept as a permanent cloud copy.",
+    "cloud.confirm_overwrite": "Confirm Overwrite",
+    "cloud.delete_confirm_title": "Delete Cloud Configuration?",
+    "cloud.delete_confirm_body": "The encrypted configuration stored in the cloud will be permanently deleted.\nAfter deletion, you can upload a new configuration from this device.\nMake sure you have another backup if needed.",
+    "cloud.delete_confirm_btn": "Delete Configuration",
+    "cloud.uploaded_title": "Configuration Uploaded",
+    "cloud.uploaded_body": "Your Hermes Agent configuration has been encrypted locally and uploaded successfully.\nOnly one active cloud configuration is stored for this device.",
+    "cloud.updated_title": "Configuration Updated",
+    "cloud.updated_body": "Your previous cloud configuration has been replaced with the new encrypted configuration.\nOnly the current configuration is stored.",
+    "cloud.deleted_title": "Configuration Deleted",
+    "cloud.deleted_body": "Your cloud configuration has been deleted.\nYou can upload a new configuration at any time.",
+    "cloud.passphrase": "Passphrase",
+    "cloud.encrypt_help": "Your configuration is encrypted locally before upload. The cloud service never sees your passphrase and cannot read your data.",
+    "cloud.uploading": "Uploading…",
+    "cloud.restoring": "Downloading & restoring…",
+    "cloud.busy": "Working…",
+    "cloud.notice_title": "Cloud Storage Notice",
+    "cloud.notice_body": "Your configuration is encrypted locally before upload.\nThe server stores encrypted configuration data and related metadata.\nYour encryption password is not stored by the cloud service.\nIf you lose your password, the cloud service cannot decrypt your configuration for you.\nKeep an independent backup.",
+    "cloud.connection": "Test Connection",
+    "cloud.reachable": "Cloud service reachable",
+    "cloud.unreachable": "Cloud service unreachable",
+    "cloud.api_version": "API version",
+    "cloud.latency": "Latency",
+    "cloud.test_failed": "Connection test failed",
+    "cloud.error": "Cloud operation failed",
+
+    // ---- settings ----
+    "settings.title": "Settings",
+    "settings.general": "General",
+    "settings.appearance": "Appearance",
+    "settings.language": "Language",
+    "settings.privacy": "Privacy",
+    "settings.security": "Security",
+    "settings.cloud": "Cloud",
+    "settings.cloud_server": "Cloud Server",
+    "settings.server_status": "Server Status",
+    "settings.test_connection": "Test Connection",
+    "settings.account": "Account",
+    "settings.device": "Device",
+    "settings.storage": "Storage",
+    "settings.privacy_policy": "Privacy Policy",
+    "settings.view_disclaimer": "Important Information",
+    "settings.dark_mode": "Dark mode",
+
+    // ---- disclaimer (first launch, re-viewable in Settings) ----
+    "disclaimer.title": "Important Information",
+    "disclaimer.body": "Hermes Agent Migrator is a configuration migration, backup, restore and cloud storage tool.\nCloud configuration data is encrypted locally before being uploaded.\nThe cloud service does not store your configuration decryption password.\nIf you lose your encryption password, your encrypted configuration may become unrecoverable.\nCloud services may be unavailable due to network problems, maintenance or other circumstances.\nYou should always maintain an independent local backup of important data.\nBefore uploading diagnostic logs, review the information that will be uploaded.\nUse this software at your own risk.",
+    "disclaimer.ack": "I have read and understand this information.",
+    "disclaimer.continue": "Continue",
+    "disclaimer.back": "Back",
+
+    // ---- privacy / security docs (shown in Settings) ----
+    "privacy.title": "Privacy Policy",
+    "privacy.data": "Information collected / processed:\n• Account identifier\n• Device identifier (random UUID, not a hardware fingerprint)\n• Public IP (for security & abuse prevention)\n• Configuration metadata\n• Encrypted configuration blob\n• Diagnostic information",
+    "privacy.use": "Purpose:\n• Cloud storage\n• Security\n• Abuse prevention\n• Device identification\n• Configuration management\n• Diagnostics",
+    "privacy.notused": "Never used for:\n• Advertising profiling\n• Selling user information\n• Unrelated tracking",
+    "security.title": "Security",
+    "security.body": "Secrets are encrypted client-side with AES-256-GCM using an Argon2id key derivation.\nMachine-specific artifacts (venv, node_modules, OS keychains) are re-installed on the target, not migrated.\nRestored secrets are written back with restrictive 0600 permissions.",
+
+    // ---- common ----
     "common.ready": "Ready",
     "common.failed": "Failed",
     "common.cancel": "Cancel",
     "common.close": "Close",
+    "common.done": "Done",
     "common.bytes": "B",
   },
+
   zh: {
+    // ---- app / shell ----
     "app.title": "Hermes Agent 迁移工具",
     "app.tagline": "把你的 Hermes 环境，轻松迁移到任何一台电脑。",
+    "app.welcome": "欢迎使用 Hermes Agent 迁移工具",
     "nav.scan": "扫描",
     "nav.pack": "打包",
     "nav.restore": "恢复",
+    "nav.cloud": "云端",
+    "nav.settings": "设置",
+
+    // ---- scan ----
     "scan.title": "扫描你的环境",
     "scan.subtitle": "检测你的 Hermes Agent 安装与用户数据。",
     "scan.run": "开始扫描",
@@ -94,6 +189,8 @@ const dict: Record<Lang, Record<string, string>> = {
     "comp.pastes": "粘贴记录",
     "comp.secrets": "密钥",
     "comp.application": "应用本体",
+
+    // ---- pack ----
     "pack.title": "创建迁移包",
     "pack.subtitle": "把配置与用户数据打包成一个可携带文件。",
     "pack.select": "选择要包含的内容",
@@ -106,6 +203,8 @@ const dict: Record<Lang, Record<string, string>> = {
     "pack.creating": "正在打包…",
     "pack.done": "迁移完成",
     "pack.done_help": "把这个文件传到目标机器，然后运行「恢复」。",
+
+    // ---- restore ----
     "restore.title": "恢复迁移包",
     "restore.subtitle": "打开一个 .hermesmig 文件并恢复到本机。",
     "restore.choose": "选择迁移包",
@@ -121,17 +220,273 @@ const dict: Record<Lang, Record<string, string>> = {
     "restore.rolled_back": "校验失败 — 已回滚到之前状态",
     "restore.secret_passphrase": "口令",
     "restore.path_repair": "把绝对路径改写为本机路径",
+
+    // ---- cloud ----
+    "cloud.title": "云端配置",
+    "cloud.subtitle": "每台设备最多保留一份加密配置。",
+    "cloud.has_title": "配置可用",
+    "cloud.last_updated": "最后更新",
+    "cloud.storage": "占用空间",
+    "cloud.device": "设备",
+    "cloud.overwrite": "覆盖配置",
+    "cloud.download_restore": "下载并恢复",
+    "cloud.delete": "删除配置",
+    "cloud.no_title": "未找到云端配置",
+    "cloud.no_body": "你的加密配置可以安全上传到云端。",
+    "cloud.upload": "上传配置",
+    "cloud.existing_title": "已存在配置",
+    "cloud.existing_body": "该设备已有一份云端配置。\n在当前配置存在时无法再创建另一份。\n你可以覆盖现有配置，或先删除它。",
+    "cloud.overwrite_confirm_title": "覆盖配置？",
+    "cloud.overwrite_confirm_body": "当前云端配置将被新的加密配置替换。\n之前的配置不会作为永久云端副本保留。",
+    "cloud.confirm_overwrite": "确认覆盖",
+    "cloud.delete_confirm_title": "删除云端配置？",
+    "cloud.delete_confirm_body": "存储在云端的加密配置将被永久删除。\n删除后，你可以从这台设备上传新配置。\n如有需要，请确保你另有备份。",
+    "cloud.delete_confirm_btn": "删除配置",
+    "cloud.uploaded_title": "配置已上传",
+    "cloud.uploaded_body": "你的 Hermes Agent 配置已在本地加密并成功上传。\n该设备仅保存一份有效云端配置。",
+    "cloud.updated_title": "配置已更新",
+    "cloud.updated_body": "你之前的云端配置已被新的加密配置替换。\n仅保留当前配置。",
+    "cloud.deleted_title": "配置已删除",
+    "cloud.deleted_body": "你的云端配置已删除。\n你可以随时上传新配置。",
+    "cloud.passphrase": "口令",
+    "cloud.encrypt_help": "你的配置在上传前于本地加密。云端服务无法看到你的口令，也无法读取你的数据。",
+    "cloud.uploading": "正在上传…",
+    "cloud.restoring": "正在下载并恢复…",
+    "cloud.busy": "处理中…",
+    "cloud.notice_title": "云端存储须知",
+    "cloud.notice_body": "你的配置在上传前于本地加密。\n服务器仅存储加密后的配置数据及相关元数据。\n云端服务不会存储你的解密密码。\n若你忘记密码，云端服务无法替你解密配置。\n请自行保留一份独立备份。",
+    "cloud.connection": "连接测试",
+    "cloud.reachable": "云服务可达",
+    "cloud.unreachable": "云服务不可达",
+    "cloud.api_version": "API 版本",
+    "cloud.latency": "延迟",
+    "cloud.test_failed": "连接测试失败",
+    "cloud.error": "云端操作失败",
+
+    // ---- settings ----
+    "settings.title": "设置",
+    "settings.general": "常规",
+    "settings.appearance": "外观",
+    "settings.language": "语言",
+    "settings.privacy": "隐私",
+    "settings.security": "安全",
+    "settings.cloud": "云端",
+    "settings.cloud_server": "云服务器",
+    "settings.server_status": "服务器状态",
+    "settings.test_connection": "连接测试",
+    "settings.account": "账户",
+    "settings.device": "设备",
+    "settings.storage": "存储",
+    "settings.privacy_policy": "隐私政策",
+    "settings.view_disclaimer": "重要信息",
+    "settings.dark_mode": "深色模式",
+
+    // ---- disclaimer ----
+    "disclaimer.title": "重要信息",
+    "disclaimer.body": "Hermes Agent 迁移工具是一款配置迁移、备份、恢复与云端存储工具。\n云端配置数据在上传前于本地加密。\n云端服务不会存储你的配置解密密码。\n若你丢失加密密码，你的加密配置可能无法恢复。\n云端服务可能因网络问题、维护或其他情况而不可用。\n你应始终为重要数据保留一份独立的本地备份。\n在上传诊断日志前，请查看将被上传的内容。\n本软件使用风险自负。",
+    "disclaimer.ack": "我已阅读并理解上述信息。",
+    "disclaimer.continue": "继续",
+    "disclaimer.back": "返回",
+
+    // ---- privacy / security ----
+    "privacy.title": "隐私政策",
+    "privacy.data": "收集 / 处理的信息：\n• 账户标识\n• 设备标识（随机 UUID，非硬件指纹）\n• 公网 IP（用于安全与滥用防护）\n• 配置元数据\n• 加密配置数据块\n• 诊断信息",
+    "privacy.use": "用途：\n• 云端存储\n• 安全\n• 滥用防护\n• 设备识别\n• 配置管理\n• 诊断",
+    "privacy.notused": "绝不用于：\n• 广告画像\n• 出售用户信息\n• 无关追踪",
+    "security.title": "安全",
+    "security.body": "密钥在客户端使用 AES-256-GCM 加密，采用 Argon2id 密钥派生。\n机器相关的产物（venv、node_modules、系统钥匙串）在目标机上重新安装，不随迁移迁移。\n恢复的密钥以严格的 0600 权限写回。",
+
+    // ---- common ----
     "common.ready": "就绪",
     "common.failed": "失败",
     "common.cancel": "取消",
     "common.close": "关闭",
+    "common.done": "完成",
     "common.bytes": "字节",
+  },
+
+  "zh-TW": {
+    // ---- app / shell ----
+    "app.title": "Hermes Agent 遷移工具",
+    "app.tagline": "把你的 Hermes 環境，輕鬆遷移到任何一台電腦。",
+    "app.welcome": "歡迎使用 Hermes Agent 遷移工具",
+    "nav.scan": "掃描",
+    "nav.pack": "打包",
+    "nav.restore": "還原",
+    "nav.cloud": "雲端",
+    "nav.settings": "設定",
+
+    // ---- scan ----
+    "scan.title": "掃描你的環境",
+    "scan.subtitle": "偵測你的 Hermes Agent 安裝與使用者資料。",
+    "scan.run": "開始掃描",
+    "scan.running": "正在掃描…",
+    "scan.detected": "偵測到 Hermes Agent",
+    "scan.notdetected": "找不到 Hermes Agent",
+    "scan.home": "Hermes 目錄",
+    "scan.version": "版本",
+    "scan.components": "元件",
+    "scan.notes": "說明",
+    "scan.total": "檔案 / 大小",
+    "scan.to_pack": "進入打包 →",
+    "comp.config": "設定",
+    "comp.skills": "技能",
+    "comp.plugins": "外掛",
+    "comp.sessions": "工作階段",
+    "comp.state_db": "狀態資料庫",
+    "comp.cron": "排程任務",
+    "comp.memories": "記憶",
+    "comp.kanban": "看板",
+    "comp.pastes": "貼上記錄",
+    "comp.secrets": "金鑰",
+    "comp.application": "應用程式本體",
+
+    // ---- pack ----
+    "pack.title": "建立遷移套件",
+    "pack.subtitle": "把設定與使用者資料打包成一個可攜帶檔案。",
+    "pack.select": "選擇要包含的內容",
+    "pack.application": "包含應用程式原始碼（排除 venv / node_modules）",
+    "pack.secrets": "用密碼加密金鑰",
+    "pack.secrets_help": "API 金鑰與權杖使用 AES-256-GCM（Argon2id 衍生）加密。目標機器還原時需要此密碼。",
+    "pack.passphrase": "密碼",
+    "pack.out": "輸出檔案",
+    "pack.create": "建立遷移套件",
+    "pack.creating": "正在打包…",
+    "pack.done": "遷移完成",
+    "pack.done_help": "把這個檔案传到目標機器，然後執行「還原」。",
+
+    // ---- restore ----
+    "restore.title": "還原遷移套件",
+    "restore.subtitle": "開啟一個 .hermesmig 檔案並還原到本機。",
+    "restore.choose": "選擇遷移套件",
+    "restore.no_pkg": "尚未選擇遷移套件",
+    "restore.target": "還原到",
+    "restore.target_default": "本機的 Hermes 目錄",
+    "restore.env_check": "環境檢查",
+    "restore.needs_reauth": "需要重新鑑權",
+    "restore.run": "開始還原",
+    "restore.running": "正在還原…",
+    "restore.result": "還原結果",
+    "restore.success": "所有元件驗證通過",
+    "restore.rolled_back": "驗證失敗 — 已還原到先前狀態",
+    "restore.secret_passphrase": "密碼",
+    "restore.path_repair": "將絕對路徑重寫為本機路徑",
+
+    // ---- cloud ----
+    "cloud.title": "雲端設定",
+    "cloud.subtitle": "每台裝置最多保留一份加密設定。",
+    "cloud.has_title": "設定可用",
+    "cloud.last_updated": "最後更新",
+    "cloud.storage": "儲存空間",
+    "cloud.device": "裝置",
+    "cloud.overwrite": "覆蓋設定",
+    "cloud.download_restore": "下載並還原",
+    "cloud.delete": "刪除設定",
+    "cloud.no_title": "找不到雲端設定",
+    "cloud.no_body": "你的加密設定可以安全上傳到雲端。",
+    "cloud.upload": "上傳設定",
+    "cloud.existing_title": "已存在設定",
+    "cloud.existing_body": "此裝置已有一份雲端設定。\n在現有設定存在時無法再建立另一份。\n你可以覆蓋現有設定，或先刪除它。",
+    "cloud.overwrite_confirm_title": "覆蓋設定？",
+    "cloud.overwrite_confirm_body": "目前雲端設定將被新的加密設定取代。\n先前的設定不會作為永久雲端副本保留。",
+    "cloud.confirm_overwrite": "確認覆蓋",
+    "cloud.delete_confirm_title": "刪除雲端設定？",
+    "cloud.delete_confirm_body": "儲存在雲端的加密設定將被永久刪除。\n刪除後，你可以從此裝置上傳新設定。\n如有需要，請確保你另有備份。",
+    "cloud.delete_confirm_btn": "刪除設定",
+    "cloud.uploaded_title": "設定已上傳",
+    "cloud.uploaded_body": "你的 Hermes Agent 設定已在本地加密並成功上傳。\n此裝置僅保留一份有效的雲端設定。",
+    "cloud.updated_title": "設定已更新",
+    "cloud.updated_body": "你之前的雲端設定已被新的加密設定取代。\n僅保留目前設定。",
+    "cloud.deleted_title": "設定已刪除",
+    "cloud.deleted_body": "你的雲端設定已刪除。\n你可以隨時上傳新設定。",
+    "cloud.passphrase": "密碼",
+    "cloud.encrypt_help": "你的設定在上傳前於本地加密。雲端服務無法看到你的密碼，也無法讀取你的資料。",
+    "cloud.uploading": "正在上傳…",
+    "cloud.restoring": "正在下載並還原…",
+    "cloud.busy": "處理中…",
+    "cloud.notice_title": "雲端儲存須知",
+    "cloud.notice_body": "你的設定在上傳前於本地加密。\n伺服器僅儲存加密後的設定資料及相關中繼資料。\n雲端服務不會儲存你的解密密碼。\n若你忘記密碼，雲端服務無法替你解密設定。\n請自行保留一份獨立備份。",
+    "cloud.connection": "連線測試",
+    "cloud.reachable": "雲端服務可連線",
+    "cloud.unreachable": "雲端服務無法連線",
+    "cloud.api_version": "API 版本",
+    "cloud.latency": "延遲",
+    "cloud.test_failed": "連線測試失敗",
+    "cloud.error": "雲端操作失敗",
+
+    // ---- settings ----
+    "settings.title": "設定",
+    "settings.general": "一般",
+    "settings.appearance": "外觀",
+    "settings.language": "語言",
+    "settings.privacy": "隱私權",
+    "settings.security": "安全性",
+    "settings.cloud": "雲端",
+    "settings.cloud_server": "雲端伺服器",
+    "settings.server_status": "伺服器狀態",
+    "settings.test_connection": "連線測試",
+    "settings.account": "帳號",
+    "settings.device": "裝置",
+    "settings.storage": "儲存",
+    "settings.privacy_policy": "隱私權政策",
+    "settings.view_disclaimer": "重要訊息",
+    "settings.dark_mode": "深色模式",
+
+    // ---- disclaimer ----
+    "disclaimer.title": "重要訊息",
+    "disclaimer.body": "Hermes Agent 遷移工具是一款設定遷移、備份、還原與雲端儲存工具。\n雲端設定資料在上傳前於本地加密。\n雲端服務不會儲存你的設定解密密碼。\n若你遺失加密密碼，你的加密設定可能無法恢復。\n雲端服務可能因網路問題、維護或其他情況而不可用。\n你應始終為重要資料保留一份獨立的本地備份。\n在上傳診斷日誌前，請檢視將被上傳的內容。\n本軟體使用風險自負。",
+    "disclaimer.ack": "我已閱讀並理解上述訊息。",
+    "disclaimer.continue": "繼續",
+    "disclaimer.back": "返回",
+
+    // ---- privacy / security ----
+    "privacy.title": "隱私權政策",
+    "privacy.data": "收集 / 處理的資訊：\n• 帳號識別碼\n• 裝置識別碼（隨機 UUID，非硬體指紋）\n• 公網 IP（用於安全與濫用防護）\n• 設定中繼資料\n• 加密設定資料塊\n• 診斷資訊",
+    "privacy.use": "用途：\n• 雲端儲存\n• 安全\n• 濫用防護\n• 裝置識別\n• 設定管理\n• 診斷",
+    "privacy.notused": "絕不用於：\n• 廣告檔案化\n• 出售使用者資訊\n• 無關追蹤",
+    "security.title": "安全性",
+    "security.body": "金鑰在用戶端使用 AES-256-GCM 加密，採用 Argon2id 金鑰衍生。\n機器相關的產物（venv、node_modules、系統金鑰串）在目標機器上重新安裝，不隨遷移遷移。\n還原的金鑰以嚴格的 0600 權限寫回。",
+
+    // ---- common ----
+    "common.ready": "就緒",
+    "common.failed": "失敗",
+    "common.cancel": "取消",
+    "common.close": "關閉",
+    "common.done": "完成",
+    "common.bytes": "位元組",
   },
 };
 
 export function detectLang(): Lang {
   const l = (typeof navigator !== "undefined" ? navigator.language : "en").toLowerCase();
-  return l.startsWith("zh") ? "zh" : "en";
+  if (l.startsWith("zh")) {
+    // Traditional markers first.
+    if (/^(zh-tw|zh-hk|zh-mo|zh-hant|zh-sg)/.test(l) || l.includes("hant")) return "zh-TW";
+    return "zh";
+  }
+  return "en";
+}
+
+/** Cycle en → zh → zh-TW → en for the top-bar language chip. */
+export function nextLang(cur: Lang): Lang {
+  if (cur === "en") return "zh";
+  if (cur === "zh") return "zh-TW";
+  return "en";
+}
+
+/** Short label shown on the language chip. */
+export function langLabel(cur: Lang): string {
+  if (cur === "en") return "中文";
+  if (cur === "zh") return "繁體";
+  return "EN";
+}
+
+/** Which label the chip shows = the language it will switch TO is confusing;
+ *  instead show the current language in a compact form. */
+export function curLangLabel(cur: Lang): string {
+  if (cur === "en") return "EN";
+  if (cur === "zh") return "简中";
+  return "繁中";
 }
 
 interface I18nCtx {

@@ -5,6 +5,8 @@
 //! logs secrets.
 
 pub mod checksum;
+pub mod cloud;
+pub mod cloudserver;
 pub mod error;
 pub mod manifest;
 pub mod pack;

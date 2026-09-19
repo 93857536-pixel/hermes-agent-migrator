@@ -8,6 +8,9 @@ import type {
   RestoreReport,
   EnvCheck,
   ProgressEvt,
+  CloudStatus,
+  ConnTest,
+  CloudRestoreDone,
 } from "./migrator";
 
 const toTauriError = (e: unknown): string => {
@@ -42,6 +45,34 @@ export const verifyPackage = (pkgPath: string) =>
 
 export const backupCurrentHermes = () =>
   invoke<string>("backup_current_hermes").catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+// ---- Cloud ----------------------------------------------------------------
+
+export const cloudTestConnection = () =>
+  invoke<ConnTest>("cloud_test_connection").catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+export const cloudStatus = () =>
+  invoke<CloudStatus>("cloud_status").catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+export const cloudUpload = (passphrase: string, overwrite: boolean) =>
+  invoke<CloudStatus>("cloud_upload", { passphrase, overwrite }).catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+export const cloudDownloadRestore = (passphrase: string, outPath: string) =>
+  invoke<CloudRestoreDone>("cloud_download_restore", {
+    passphrase,
+    outPath,
+  }).catch((e) => Promise.reject(toTauriError(e)));
+
+export const cloudDelete = () =>
+  invoke<CloudStatus>("cloud_delete").catch((e) =>
     Promise.reject(toTauriError(e)),
   );
 

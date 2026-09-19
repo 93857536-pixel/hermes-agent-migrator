@@ -110,7 +110,46 @@ hermes-migrator restore ~/migration.hermesmig --passphrase "s3cret"
 hermes-migrator backup
 ```
 
+### Cloud / 云端
+
+```sh
+# show this device's cloud configuration
+hermes-migrator cloud status
+
+# test reachability + device identity
+hermes-migrator cloud test
+
+# upload (or overwrite) the current configuration
+hermes-migrator cloud upload --passphrase "s3cret"
+hermes-migrator cloud upload --passphrase "s3cret" --overwrite
+
+# download THE configuration and restore it onto this machine
+hermes-migrator cloud restore --passphrase "s3cret"
+
+# delete this device's configuration
+hermes-migrator cloud delete
+```
+
 All subcommands accept `--help` for full options. 所有子命令均可 `--help`。
+
+## Cloud configuration / 云端配置
+
+Hermes Agent Migrator can securely store an **encrypted cloud configuration**.
+Each device maintains at most **one active** cloud configuration; users can
+overwrite the existing one, or delete it and upload a new one. The
+configuration is encrypted locally before upload (AES-256-GCM + Argon2id) —
+the cloud service never sees the plaintext or the passphrase.
+
+Hermes Agent Migrator 可安全存储**加密的云端配置**。每台设备最多保留**一份有效**
+云端配置；用户可覆盖现有配置，或删除后上传新配置。配置在上传前于本地加密
+（AES-256-GCM + Argon2id）—— 云服务永远看不到明文或口令。
+
+- The GUI's **Cloud** tab and **Settings → Cloud** offer the same operations
+  with a first-run notice and a Test-Connection panel. GUI 的**云端**标签与
+  **设置 → 云端** 提供相同操作，含首启须知与「连接测试」面板。
+- Details: [`docs/cloud.md`](docs/cloud.md) · [`docs/privacy.md`](docs/privacy.md) ·
+  [`docs/security.md`](docs/security.md) · backend design in
+  [`docs/cloud-alibaba.md`](docs/cloud-alibaba.md). 详情见上述文档。
 
 ## Package format / 包格式 (`.hermesmig`)
 

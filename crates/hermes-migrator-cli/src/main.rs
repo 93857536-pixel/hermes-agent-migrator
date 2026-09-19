@@ -1,7 +1,9 @@
 //! hermes-migrator — CLI front-end for the migrator-core engine.
 //!
-//! Commands: scan | pack | restore | verify | list | backup
+//! Commands: scan | pack | restore | verify | list | backup | cloud
 //! GUI (Tauri) and this CLI share the exact same core: no duplicated logic.
+
+mod cloud;
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -44,6 +46,9 @@ enum Cmd {
     List(PkgPath),
     /// Back up the existing hermes home (timestamped directory).
     Backup,
+    /// Manage the one cloud configuration for this device.
+    #[command(subcommand)]
+    Cloud(cloud::CloudCmd),
 }
 
 #[derive(Args)]
@@ -98,6 +103,7 @@ fn main() -> Result<()> {
         Cmd::Verify(p) => cmd_verify(&p.package),
         Cmd::List(p) => cmd_list(&p.package),
         Cmd::Backup => cmd_backup(),
+        Cmd::Cloud(c) => cloud::dispatch(c),
     };
     match result {
         Ok(()) => Ok(()),

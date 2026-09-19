@@ -11,7 +11,13 @@ fn main() {
             commands::check_environment,
             commands::restore,
             commands::verify_package,
-            commands::backup_current_hermes
+            commands::backup_current_hermes,
+            commands::cloud::cloud_test_connection,
+            commands::cloud::cloud_status,
+            commands::cloud::cloud_upload,
+            commands::cloud::cloud_download_restore,
+            commands::cloud::cloud_delete,
+            commands::cloud::cloud_sweep_orphans
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

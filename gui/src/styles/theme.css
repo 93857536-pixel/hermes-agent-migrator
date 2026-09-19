@@ -584,6 +584,33 @@ body {
   margin-bottom: 16px;
 }
 
+.row.wrap {
+  flex-wrap: wrap;
+}
+
+.row .ghost,
+.row .primary {
+  margin-bottom: 0;
+}
+
+.kv-list {
+  margin: 4px 0 8px;
+}
+
+.notice-body {
+  white-space: pre-line;
+  font-family: inherit;
+  margin: 8px 0 14px;
+  line-height: 1.65;
+}
+
+.check.block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
 .mono {
   font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
   font-size: 12.5px;
