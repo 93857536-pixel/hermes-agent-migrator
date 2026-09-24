@@ -53,6 +53,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      # `gh release create` shells out to `git` to validate `--target`; this
+      # job otherwise has no checkout, so it dies with "not a git repository".
+      # Providing one lets the idempotent delete/create work on the runner.
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
