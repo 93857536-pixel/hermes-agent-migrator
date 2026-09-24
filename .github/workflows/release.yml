@@ -62,19 +62,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
+          TAG="${{ github.ref_name }}"
+          REPO="${{ github.repository }}"
           mkdir -p dist
           # Windows: NSIS installer + portable; macOS: DMG
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.dmg' -o -name '*.AppImage' \) -exec cp -f {} dist/ \;
           ls -lh dist/
           test -n "$(ls -A dist/ 2>/dev/null)" || { echo "no installer artifacts found; refusing to publish an empty release"; exit 1; }
+          # Resolve the tag to its commit via the API. This job has no
+          # checkout, so `--target <tag-name>` (which needs local git) fails
+          # with "not a git repository"; a raw commit SHA needs no git.
+          # Annotated tags resolve to a tag object first — peel it.
+          ref_json="$(gh api "repos/$REPO/git/ref/tags/$TAG")"
+          sha="$(echo "$ref_json" | jq -r .object.sha)"
+          otype="$(echo "$ref_json" | jq -r .object.type)"
+          if [ "$otype" = "tag" ]; then
+            sha="$(gh api "repos/$REPO/git/tags/$sha" --jq .object.sha)"
+          fi
+          echo "publishing $TAG at commit $sha"
           # Idempotent publish: if this tag's release already exists (CI
           # re-run), replace it in place instead of failing on the create.
-          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
-            echo "release ${{ github.ref_name }} exists — replacing"
-            gh release delete "${{ github.ref_name }}" --yes || true
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG exists — replacing"
+            gh release delete "$TAG" --yes || true
           fi
-          gh release create "${{ github.ref_name }}" \
-            --title "${{ github.ref_name }} — Hermes Agent Migrator" \
-            --notes "Hermes Agent Migrator ${{ github.ref_name }}. Download the installer for your platform (Windows: .exe NSIS; macOS: .dmg)." \
-            --target "${{ github.ref_name }}" \
+          gh release create "$TAG" \
+            --title "$TAG — Hermes Agent Migrator" \
+            --notes "Hermes Agent Migrator $TAG. Download the installer for your platform (Windows: .exe NSIS; macOS: .dmg)." \
+            --target "$sha" \
             dist/*
