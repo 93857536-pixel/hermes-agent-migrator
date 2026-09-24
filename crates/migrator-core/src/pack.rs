@@ -400,6 +400,10 @@ pub fn pack(
         // payload files
         let total = entries.len() as u64;
         let mut checksums: BTreeMap<String, String> = BTreeMap::new();
+        // `permissions` is only ever *written* on unix (from the mode bits);
+        // on Windows it stays an empty read-only map, so `mut` would trip
+        // `unused_mut` there under `-D warnings`.
+        #[cfg_attr(not(unix), allow(unused_mut))]
         let mut permissions: BTreeMap<String, u32> = BTreeMap::new();
         let mut per_component: BTreeMap<&'static str, (u64, u64)> = BTreeMap::new();
 
