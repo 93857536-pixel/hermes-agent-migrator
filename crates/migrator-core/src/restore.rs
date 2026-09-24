@@ -662,7 +662,10 @@ fn repair_paths_in(
 /// Prefix-safe: a match only rewrites when it is not embedded in a longer
 /// path segment, so `/Users/Alice` never mangles `/Users/Alicex/...`.
 fn rewrite_paths(s: &str, rules: &[crate::pathmapper::PathRule]) -> String {
-    let mut out = s.to_string();
+    // Rules are `/`-normalized (see `pathmapper`), so match against the
+    // input in `/` form too. Windows-authored files keep backslashes; this
+    // normalizes them so cross-machine repair works on every platform.
+    let mut out = s.replace('\\', "/");
     for r in rules {
         if r.from.is_empty() || !out.contains(&r.from) {
             continue;
@@ -795,6 +798,30 @@ mod tests {
         assert_eq!(
             rewrite_paths("home: /Users/Alice/.hermes", &[rule]),
             "home: /Users/Bob/.hermes"
+        );
+    }
+
+    #[test]
+    fn rewrite_paths_normalizes_backslash_input() {
+        // Windows-authored text files keep backslashes; the `/`-based rules
+        // must still match. `replace('\\', "/")` is pure string logic, so
+        // this holds identically on every platform.
+        let rule = crate::pathmapper::PathRule {
+            from: "C:/Users/Alice".into(),
+            to: "D:/Users/Bob".into(),
+        };
+        assert_eq!(
+            rewrite_paths("workdir: C:\\Users\\Alice\\.hermes", &[rule.clone()]),
+            "workdir: D:/Users/Bob/.hermes"
+        );
+        // Boundary safety survives normalization too.
+        let rule2 = crate::pathmapper::PathRule {
+            from: "C:/Users/Alice".into(),
+            to: "D:/Users/Bob".into(),
+        };
+        assert_eq!(
+            rewrite_paths("C:\\Users\\Alicex\\f", &[rule2]),
+            "C:/Users/Alicex/f"
         );
     }
 }

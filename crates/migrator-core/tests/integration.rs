@@ -17,7 +17,11 @@ fn noop_progress() -> pack::ProgressFn {
 /// Build a fake source home tree under `base/.hermes` and return its path.
 fn make_fake_home(base: &Path) -> std::path::PathBuf {
     let hermes = base.join(".hermes");
-    let hs = hermes.display().to_string();
+    // Forward-slash-normalized: the path-repair engine matches its rules in
+    // `/` form (see `pathmapper`), so the fixture writes source refs in that
+    // form too. On unix this is identical to `display()`; on Windows it
+    // avoids backslashes the `/`-based rules would never match.
+    let hs = hermes.to_string_lossy().replace('\\', "/");
     std::fs::create_dir_all(hermes.join("skills/demo")).unwrap();
     std::fs::create_dir_all(hermes.join("memories")).unwrap();
     std::fs::create_dir_all(hermes.join("weixin/accounts")).unwrap();
@@ -88,14 +92,16 @@ fn pack_verify_restore_roundtrip() {
     std::fs::read(target.join("state.db")).unwrap();
 
     // Path repair: source-home references in config.yaml now point at target.
-    let target_str = target.display().to_string();
+    // The repair engine emits forward-slash paths on every platform, so
+    // assert against the normalized form (identical to `display()` on unix).
+    let target_str = target.to_string_lossy().replace('\\', "/");
     assert!(
         cfg.contains(&format!("workdir: {target_str}"))
             || cfg.contains(&format!("workdir: {target_str}/")),
         "path repair must rewrite source home -> target home, got: {cfg}"
     );
-    let src_home_str = src_home.to_str().unwrap();
-    assert!(!cfg.contains(src_home_str), "source path leaked: {cfg}");
+    let src_home_str = src_home.to_string_lossy().replace('\\', "/");
+    assert!(!cfg.contains(&src_home_str), "source path leaked: {cfg}");
 
     // Secrets restored, locked to 0600 on Unix.
     assert_eq!(
