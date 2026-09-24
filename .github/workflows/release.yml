@@ -66,6 +66,13 @@ jobs:
           # Windows: NSIS installer + portable; macOS: DMG
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.dmg' -o -name '*.AppImage' \) -exec cp -f {} dist/ \;
           ls -lh dist/
+          test -n "$(ls -A dist/ 2>/dev/null)" || { echo "no installer artifacts found; refusing to publish an empty release"; exit 1; }
+          # Idempotent publish: if this tag's release already exists (CI
+          # re-run), replace it in place instead of failing on the create.
+          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
+            echo "release ${{ github.ref_name }} exists — replacing"
+            gh release delete "${{ github.ref_name }}" --yes || true
+          fi
           gh release create "${{ github.ref_name }}" \
             --title "${{ github.ref_name }} — Hermes Agent Migrator" \
             --notes "Hermes Agent Migrator ${{ github.ref_name }}. Download the installer for your platform (Windows: .exe NSIS; macOS: .dmg)." \

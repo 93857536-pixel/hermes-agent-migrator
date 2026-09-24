@@ -30,11 +30,14 @@ jobs:
       - name: Cargo fmt check
         run: cargo fmt --all -- --check
 
+      # Core + CLI only. The GUI crate needs platform system libraries
+      # (GTK/webkit2gtk on Linux, the Windows resource pipeline, etc.),
+      # which are covered by the dedicated GUI build jobs below.
       - name: Cargo clippy
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy -p migrator-core -p hermes-migrator-cli -- -D warnings
 
       - name: Cargo test
-        run: cargo test --workspace
+        run: cargo test -p migrator-core -p hermes-migrator-cli
 
   build-gui:
     name: GUI build (${{ matrix.os }})
