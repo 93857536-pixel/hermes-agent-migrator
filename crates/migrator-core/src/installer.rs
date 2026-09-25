@@ -242,17 +242,15 @@ fn run_streamed(
     let (tx, rx) = mpsc::channel::<String>();
     let tx_err = tx.clone();
     let t_out = std::thread::spawn(move || {
-        for line in stdout.lines() {
-            if let Ok(line) = line {
-                let _ = tx.send(line);
-            }
+        let mut out = stdout.lines();
+        while let Some(Ok(line)) = out.next() {
+            let _ = tx.send(line);
         }
     });
     let t_err = std::thread::spawn(move || {
-        for line in stderr.lines() {
-            if let Ok(line) = line {
-                let _ = tx_err.send(line);
-            }
+        let mut err = stderr.lines();
+        while let Some(Ok(line)) = err.next() {
+            let _ = tx_err.send(line);
         }
     });
 
