@@ -5,8 +5,9 @@ import Pack from "./screens/Pack";
 import Restore from "./screens/Restore";
 import Cloud from "./screens/Cloud";
 import Settings from "./screens/Settings";
+import Setup from "./screens/Setup";
 
-type Screen = "scan" | "pack" | "restore" | "cloud" | "settings";
+type Screen = "scan" | "pack" | "restore" | "setup" | "cloud" | "settings";
 
 const theme = () => {
   const m = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -58,7 +59,7 @@ function Shell() {
     return () => mq.removeEventListener("change", on);
   }, []);
 
-  const nav: Screen[] = ["scan", "pack", "restore", "cloud", "settings"];
+  const nav: Screen[] = ["scan", "pack", "restore", "setup", "cloud", "settings"];
 
   const accept = () => {
     localStorage.setItem("hm-disclaimer-accepted", "1");
@@ -111,6 +112,7 @@ function Shell() {
             {screen === "scan" && <Scan onGoPack={() => setScreen("pack")} />}
             {screen === "pack" && <Pack />}
             {screen === "restore" && <Restore />}
+            {screen === "setup" && <Setup />}
             {screen === "cloud" && <Cloud />}
             {screen === "settings" && <Settings />}
           </main>

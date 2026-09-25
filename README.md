@@ -53,6 +53,16 @@ backup, rollback, and encrypted secrets.
 - **Path repair** — absolute paths inside migrated text files are rewritten
   to the target machine's layout (can be disabled per-restore).
   路径修复 —— 迁移文本文件内的绝对路径自动改写为目标机路径（可关闭）。
+- **Automatic install** — the Setup screen detects the system (OS, arch,
+  existing Hermes install, git/python/curl, free space) and installs Hermes
+  Agent with one click by running the official upstream installer
+  (`install.sh` on macOS/Linux, `install.ps1` on Windows) in
+  non-interactive mode, streaming its output live. The app never vendors
+  Hermes binaries — it always installs the current official release.
+  自动安装 —— 安装界面检测系统（OS、架构、是否已装 Hermes、git/python/curl、
+  磁盘剩余空间），一键调用官方安装器（macOS/Linux 用 install.sh，
+  Windows 用 install.ps1）以非交互模式安装 Hermes Agent，并实时显示安装日志。
+  应用不自带 Hermes 二进制，始终安装当前官方版本。
 
 ## Requirements / 系统要求
 
@@ -88,6 +98,12 @@ cargo build --release && cp target/release/hermes-migrator ~/bin/
    environment check, enter the passphrase (if any), and restore. Watch the
    live progress; failures roll back automatically. 恢复 —— 在目标机上指定
    文件，运行环境检查，输入口令（如有），开始恢复；失败自动回滚。
+4. **Setup** (on a fresh machine) — the screen auto-detects the system.
+   Click **Install Hermes Agent** to run the official installer in
+   non-interactive mode with a live log; when it finishes the screen
+   re-detects and shows the installed version. 安装 —— 新机器上自动检测系统，
+   点「自动安装 Hermes Agent」即可非交互运行官方安装器并实时查看日志；
+   完成后自动复检并显示已安装版本。
 
 ### CLI
 
@@ -108,6 +124,10 @@ hermes-migrator restore ~/migration.hermesmig --passphrase "s3cret"
 
 # 5) standalone backup of the current home
 hermes-migrator backup
+
+# 6) fresh machine: detect the system, then install Hermes Agent
+hermes-migrator detect
+hermes-migrator install            # add --skip-browser for a smaller install
 ```
 
 ### Cloud / 云端

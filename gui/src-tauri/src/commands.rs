@@ -15,6 +15,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
 pub mod cloud;
+pub mod installer;
 
 /// Progress event payload. Mirrors `ProgressEvt` on the frontend.
 #[derive(Debug, Clone, Serialize)]

@@ -8,6 +8,7 @@ pub mod checksum;
 pub mod cloud;
 pub mod cloudserver;
 pub mod error;
+pub mod installer;
 pub mod manifest;
 pub mod pack;
 pub mod pathmapper;

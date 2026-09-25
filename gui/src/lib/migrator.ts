@@ -120,6 +120,41 @@ export interface CloudRestoreDone {
   report: RestoreReport;
 }
 
+// ---- Installer (Setup screen) --------------------------------------------
+
+export interface SystemInfo {
+  os: string;
+  arch: string;
+  hermes_installed: boolean;
+  hermes_home: string | null;
+  hermes_version: string | null;
+  git_available: boolean;
+  python_available: boolean;
+  curl_available: boolean;
+  free_space_bytes: number | null;
+}
+
+export interface InstallOptions {
+  skip_browser: boolean;
+}
+
+export function defaultInstallOptions(): InstallOptions {
+  return { skip_browser: false };
+}
+
+export interface InstallDone {
+  success: boolean;
+  installer: string;
+  hermes_installed_now: boolean;
+  hermes_home: string | null;
+  hermes_version: string | null;
+  log_tail: string[];
+}
+
+export interface InstallerLogLine {
+  line: string;
+}
+
 export function fmtBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;

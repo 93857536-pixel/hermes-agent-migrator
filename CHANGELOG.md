@@ -3,6 +3,28 @@
 All notable changes to **Hermes Agent Migrator** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] — 2026-09-25
+
+### Added — Automatic Hermes Agent installation (one click, both platforms)
+
+- **New `migrator-core::installer` engine**: read-only system
+  detection (OS / architecture, existing Hermes install + version,
+  `git` / `python` / `curl` availability, free disk space) and
+  automatic installation via the official upstream installer —
+  `install.sh` (`bash --non-interactive`) on macOS / Linux,
+  `install.ps1` (`powershell -NonInteractive`) on Windows. No Hermes
+  binaries are vendored; the app always downloads the current official
+  installer.
+- **GUI: new Setup screen** (macOS + Windows builds): detects the
+  system on open, and the **"Install Hermes Agent"** button runs the
+  official installer non-interactively, streaming its output live into
+  a log box, then re-detects and reports the installed version.
+  Optional "skip browser tools" switch for a faster, smaller install.
+  45-minute safety timeout; full tri-lingual i18n (EN / 简体中文 /
+  繁體中文).
+- **CLI: new `detect` and `install [--skip-browser]` commands**,
+  sharing the same core engine as the GUI.
+
 ## [0.2.0] — 2026-09-19
 
 ### Added — Cloud configuration (one device, one configuration)

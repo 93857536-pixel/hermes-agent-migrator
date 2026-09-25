@@ -10,6 +10,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
+use migrator_core::installer::{self, InstallOptions};
 use migrator_core::pack::{self, PackOptions};
 use migrator_core::restore::{self, RestoreOptions};
 use migrator_core::scan;
@@ -36,6 +37,10 @@ struct Cli {
 enum Cmd {
     /// Scan the local Hermes Agent environment.
     Scan,
+    /// Detect the host system (read-only).
+    Detect,
+    /// Run the official Hermes installer (non-interactive).
+    Install(InstallArgs),
     /// Create a migration package.
     Pack(PackArgs),
     /// Restore a migration package onto this machine.
@@ -49,6 +54,13 @@ enum Cmd {
     /// Manage the one cloud configuration for this device.
     #[command(subcommand)]
     Cloud(cloud::CloudCmd),
+}
+
+#[derive(Args)]
+struct InstallArgs {
+    /// Skip the default browser-tools step (faster, smaller download).
+    #[arg(long)]
+    skip_browser: bool,
 }
 
 #[derive(Args)]
@@ -98,6 +110,8 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     let result = match &cli.cmd {
         Cmd::Scan => cmd_scan(),
+        Cmd::Detect => cmd_detect(),
+        Cmd::Install(a) => cmd_install(a, cli.quiet),
         Cmd::Pack(a) => cmd_pack(a),
         Cmd::Restore(a) => cmd_restore(a),
         Cmd::Verify(p) => cmd_verify(&p.package),
@@ -147,6 +161,64 @@ fn cmd_scan() -> Result<()> {
     );
     for note in &report.notes {
         println!("note: {note}");
+    }
+    Ok(())
+}
+
+fn cmd_detect() -> Result<()> {
+    let i = installer::detect();
+    println!("OS: {} / {}", i.os, i.arch);
+    println!(
+        "Hermes Agent: {}",
+        if i.hermes_installed {
+            format!(
+                "installed (version {})",
+                i.hermes_version.as_deref().unwrap_or("?")
+            )
+        } else {
+            "not installed".to_string()
+        }
+    );
+    if let Some(home) = &i.hermes_home {
+        println!("Hermes home: {home}");
+    }
+    println!(
+        "Tools: git={} python={} curl={}",
+        i.git_available, i.python_available, i.curl_available
+    );
+    Ok(())
+}
+
+fn cmd_install(args: &InstallArgs, quiet: bool) -> Result<()> {
+    let opts = InstallOptions {
+        skip_browser: args.skip_browser,
+    };
+    let report = installer::install(&opts, &mut |line| {
+        if !quiet {
+            println!("{line}");
+        }
+    })?;
+    println!(
+        "Installer exited {} — Hermes Agent {} now",
+        if report.success {
+            "successfully"
+        } else {
+            "with errors"
+        },
+        if report.hermes_installed_now {
+            format!(
+                "installed (version {})",
+                report.hermes_version.as_deref().unwrap_or("?")
+            )
+        } else {
+            "not detected".to_string()
+        }
+    );
+    if !report.success {
+        return Err(anyhow::anyhow!(
+            "installer exited with errors; last output:\n{}",
+            report.log_tail.join("\n")
+        ));
     }
     Ok(())
 }

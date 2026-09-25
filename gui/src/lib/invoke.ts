@@ -11,6 +11,10 @@ import type {
   CloudStatus,
   ConnTest,
   CloudRestoreDone,
+  SystemInfo,
+  InstallOptions,
+  InstallDone,
+  InstallerLogLine,
 } from "./migrator";
 
 const toTauriError = (e: unknown): string => {
@@ -82,6 +86,28 @@ export async function onProgress(
 ): Promise<() => void> {
   const unlisten = await listen<ProgressEvt>("migrator://progress", (e) =>
     fn(e.payload),
+  );
+  return unlisten;
+}
+
+// ---- Installer (Setup screen) --------------------------------------------
+
+export const installerDetectSystem = () =>
+  invoke<SystemInfo>("installer_detect_system").catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+export const installerInstall = (opts: InstallOptions) =>
+  invoke<InstallDone>("installer_install", { opts }).catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+/** Subscribe to `installer://log` events (streamed installer output). */
+export async function onInstallerLog(
+  fn: (line: string) => void,
+): Promise<() => void> {
+  const unlisten = await listen<InstallerLogLine>("installer://log", (e) =>
+    fn(e.payload.line),
   );
   return unlisten;
 }

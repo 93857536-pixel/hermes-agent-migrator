@@ -17,7 +17,9 @@ fn main() {
             commands::cloud::cloud_upload,
             commands::cloud::cloud_download_restore,
             commands::cloud::cloud_delete,
-            commands::cloud::cloud_sweep_orphans
+            commands::cloud::cloud_sweep_orphans,
+            commands::installer::installer_detect_system,
+            commands::installer::installer_install,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
