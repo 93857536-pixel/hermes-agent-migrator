@@ -39,11 +39,16 @@ jobs:
         working-directory: gui
         run: cargo tauri build
 
+      - name: Build cloud server binary (Windows)
+        run: cargo build --release -p hermes-cloud-server
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.os }}
-          path: target/release/bundle/**
+          path: |
+            target/release/bundle/**
+            target/release/hermes-cloud-server${{ runner.os == 'Windows' && '.exe' || '' }}
           if-no-files-found: error
 
   release:

@@ -2,6 +2,7 @@
 members = [
     "crates/migrator-core",
     "crates/hermes-migrator-cli",
+    "crates/hermes-cloud-server",
     "gui/src-tauri",
 ]
 resolver = "2"
@@ -27,6 +28,8 @@ aes-gcm = "0.10"
 argon2 = "0.5"
 dirs = "6"
 tracing = "0.1"
+ureq = { version = "2", features = ["json"] }
+tiny_http = "0.12"
 
 [profile.release]
 lto = "thin"

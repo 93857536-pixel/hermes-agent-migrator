@@ -21,7 +21,7 @@ use std::collections::BTreeMap;
 /// Argon2 KDF params + salt + raw 32-byte digest, stored compactly.
 /// The digest (Argon2id output over passphrase || salt) IS the AES-256 key;
 /// on verify we recompute and constant-time compare.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct KdfMeta {
     /// 16-byte salt (hex).
     pub salt: String,

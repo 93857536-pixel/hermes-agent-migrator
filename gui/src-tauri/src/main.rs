@@ -18,6 +18,9 @@ fn main() {
             commands::cloud::cloud_download_restore,
             commands::cloud::cloud_delete,
             commands::cloud::cloud_sweep_orphans,
+            commands::cloud::cloud_server_info,
+            commands::cloud::cloud_server_set,
+            commands::cloud::cloud_server_clear,
             commands::installer::installer_detect_system,
             commands::installer::installer_install,
         ])

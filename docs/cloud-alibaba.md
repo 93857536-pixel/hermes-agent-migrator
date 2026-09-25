@@ -181,3 +181,56 @@ Stable wire codes (see `migrator_core::cloud::CloudError::code`):
 - [ ] Rate limits & size caps enforced at the edge (§4).
 - [ ] Privacy / security docs (`docs/privacy.md`, `docs/security.md`)
       published and linked from the app's Settings.
+
+---
+
+## 9. Self-hosted single-binary deployment (shipped, 2026-09) / 自托管单二进制部署
+
+The production layout above (Cloud API + OSS + DB) is the scale-out
+target. The shipped, running deployment is a **single self-hosted binary**
+that implements the same wire contract end to end:
+
+```
+Client (Hermes Agent Migrator, CLI/GUI)
+   │  HTTP — opaque encrypted blob + per-device token
+   ▼
+hermes-cloud-server (tiny_http + migrator_core::cloudserver::FileServer)
+   │  store layout = §3 (configs/, orphans/, .tmp atomic replace)
+   ▼
+   on-disk directory (--root)
+```
+
+- **Crate** `crates/hermes-cloud-server` — one executable, no DB, no OSS.
+  Args: `--listen`, `--root`, `--prefix <reverse-proxy prefix>`,
+  `--max-blob-mib` (default 2048 MiB), `--sweep-on-start`.
+  The §4 rate limiters run per device in-process; the §6 24 h orphan sweep
+  runs on a server-side hourly timer plus at startup.
+- **Client** picks the backend via `~/.hermes-migrator/config.json`
+  (`server_url`); CLI: `cloud server set|show|clear`, or the Settings →
+  Cloud URL field in the GUI. When unset, the local reference backend
+  (`LocalCloudStore`) is used — no network.
+- **Remote backend** = `migrator_core::remote::RemoteBackend` (blocking
+  `ureq`), same `CloudStore` trait as local; per-request transfer timeout
+  scales with payload size (60 s base, ~200 KiB/s floor, 30 min cap) so
+  large blobs over slow links aren't aborted.
+- **Reference deployment** (verified 2026-09-25, Windows ECS):
+  - `C:\opt\hermes-cloud\hermes-cloud-server.exe` (cross-compiled
+    `x86_64-pc-windows-gnu`), `--root C:\opt\hermes-cloud\store`,
+    `--prefix /hermes-cloud`, listens `0.0.0.0:8084`.
+  - Self-heal: `schtasks` `HermesCloudStart` (ONSTART) +
+    `HermesCloudWatchdog` (every minute, `watchdog.ps1` health-probes and
+    respawns). Kill test: down → back in <90 s.
+  - Two egress paths:
+    1. **Fast (direct, domestic China)**: `nginx:80` `location
+       /hermes-cloud/` → `127.0.0.1:8084` with `client_max_body_size 512m`
+       (nginx on this box needs a SYSTEM-identity reload — admin `nginx -s
+       reload` hits `Access is denied` on the Global reload event; a one-shot
+       `schtasks /RU SYSTEM` reload works). Client URL:
+       `http://<ecs-public-ip>/hermes-cloud` — 199 MB blob in ~190 s.
+    2. **Slow (global, browser/GUI)**: Cloudflare tunnel ingress
+       `linminhao.top/hermes-cloud/*` → same `:8084`. Measured ~18 KB/s
+       because the box's machine-level `HTTPS_PROXY` (sing-box 7890) is
+       inherited by the cloudflared service and double-routes the tunnel;
+       the nginx direct path is the recommended one for large blobs.
+  - A real 199 MB Hermes home round-trips: upload → `cloud status` (SHA
+    match) → `cloud restore` (all components ✓) on the second machine.

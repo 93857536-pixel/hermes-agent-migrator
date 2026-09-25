@@ -224,6 +224,14 @@ export default function Cloud() {
                 <span className="k">{t("cloud.latency")}</span>
                 <span>{conn.latency_ms} ms</span>
               </div>
+              <div className="kv">
+                <span className="k">{t("cloud.backend")}</span>
+                <span className="mono">
+                  {conn.backend === "local"
+                    ? t("cloud.backend_local")
+                    : conn.backend}
+                </span>
+              </div>
             </>
           )}
         </div>

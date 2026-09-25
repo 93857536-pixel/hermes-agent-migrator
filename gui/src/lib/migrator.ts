@@ -113,6 +113,13 @@ export interface ConnTest {
   api_version: number;
   latency_ms: number;
   device_id_masked: string;
+  /** Which backend the test hit: "local" or "remote (<url>)". */
+  backend: string;
+}
+
+export interface CloudBackendInfo {
+  server_url: string | null;
+  using_remote: boolean;
 }
 
 export interface CloudRestoreDone {

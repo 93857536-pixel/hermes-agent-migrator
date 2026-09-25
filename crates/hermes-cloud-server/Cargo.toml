@@ -1,0 +1,19 @@
+[package]
+name = "hermes-cloud-server"
+description = "Self-hosted cloud configuration server for Hermes Agent Migrator (one device, one encrypted config; the runnable reference behind docs/cloud-alibaba.md)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "hermes-cloud-server"
+path = "src/main.rs"
+
+[dependencies]
+migrator-core.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+clap.workspace = true
+tiny_http.workspace = true

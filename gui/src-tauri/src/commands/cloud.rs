@@ -1,6 +1,8 @@
 //! Cloud configuration Tauri commands.
 //!
-//! The reference backend is a local, persistent `FileServer` rooted at
+//! The backend is resolved per command: a remote server configured in
+//! `~/.hermes-migrator/config.json` (via `cloud_server_set` / Settings →
+//! Cloud) → HTTP; otherwise the local reference backend rooted at
 //! `~/.hermes-migrator/cloud` (the deployment-ready server API it
 //! implements is documented in `docs/cloud-alibaba.md`). The device
 //! identity is a random UUIDv4 generated on first cloud use and stored in
@@ -9,8 +11,8 @@
 use std::path::PathBuf;
 
 use migrator_core::cloud::{decrypt_configuration, encrypt_configuration, DeviceId};
-use migrator_core::cloudserver::FileServer;
 use migrator_core::pack::{self, PackOptions};
+use migrator_core::remote::{CloudConfig, CloudStore, LocalCloudStore, RemoteBackend};
 use migrator_core::scan;
 use serde::Serialize;
 
@@ -64,6 +66,21 @@ fn chrono_lite_now_ms() -> u64 {
         .unwrap_or(0)
 }
 
+/// The backend this GUI is talking to: remote (configured) or local.
+fn resolve_store() -> Result<Box<dyn CloudStore>, String> {
+    let cfg = CloudConfig::load().map_err(|e| e.to_string())?;
+    if cfg.has_remote() {
+        if let Some(url) = cfg.server_url.clone() {
+            return Ok(Box::new(RemoteBackend::new(url)));
+        }
+    }
+    Ok(Box::new(LocalCloudStore::new(server_root()?)))
+}
+
+fn register(store: &dyn CloudStore, id: &DeviceId) -> Result<String, String> {
+    store.register(id).map_err(|e| e.code().to_string())
+}
+
 /// Connection/identity test for the Settings → Cloud screen: returns
 /// reachability, API version, latency and the (masked) device id. Never
 /// returns full server credentials or internal IPs in UI-facing fields.
@@ -73,20 +90,32 @@ pub struct ConnTest {
     pub api_version: u32,
     pub latency_ms: u32,
     pub device_id_masked: String,
+    /// Which backend the test hit: `local` or the remote base URL.
+    pub backend: String,
+}
+
+fn backend_label() -> String {
+    if let Ok(cfg) = CloudConfig::load() {
+        if let Some(u) = cfg.server_url {
+            return format!("remote ({u})");
+        }
+    }
+    "local".to_string()
 }
 
 #[tauri::command]
 pub fn cloud_test_connection() -> Result<ConnTest, String> {
     let t0 = std::time::Instant::now();
     let id = load_device_id()?;
-    let root = server_root()?;
-    let server = FileServer::new(&root);
-    let _ = server.register(&id);
+    let store = resolve_store()?;
+    let ver = store.api_version().map_err(|e| e.code().to_string())?;
+    let _ = register(store.as_ref(), &id)?;
     Ok(ConnTest {
         reachable: true,
-        api_version: 1,
+        api_version: ver,
         latency_ms: t0.elapsed().as_millis() as u32,
         device_id_masked: mask_device_id(&id.0),
+        backend: backend_label(),
     })
 }
 
@@ -109,10 +138,9 @@ pub struct CloudStatus {
 #[tauri::command]
 pub fn cloud_status() -> Result<CloudStatus, String> {
     let id = load_device_id()?;
-    let root = server_root()?;
-    let server = FileServer::new(&root);
-    let token = server.register(&id).map_err(|e| e.code().to_string())?;
-    let meta = server
+    let store = resolve_store()?;
+    let token = register(store.as_ref(), &id)?;
+    let meta = store
         .has_configuration(&id.0, &token)
         .map_err(|e| e.code().to_string())?;
     Ok(CloudStatus {
@@ -135,9 +163,8 @@ pub fn cloud_upload(
     overwrite: bool,
 ) -> Result<CloudStatus, String> {
     let id = load_device_id()?;
-    let root = server_root()?;
-    let server = FileServer::new(&root);
-    let token = server.register(&id).map_err(|e| e.code().to_string())?;
+    let store = resolve_store()?;
+    let token = register(store.as_ref(), &id)?;
 
     // Build the same configuration payload a local pack would produce.
     let home = scan::locate_hermes_home().map_err(|e| e.to_string())?;
@@ -154,21 +181,17 @@ pub fn cloud_upload(
     let raw = std::fs::read(&pkg).map_err(|e| e.to_string())?;
     let blob = encrypt_configuration(&passphrase, &raw).map_err(|e| e.to_string())?;
 
-    let meta = server
+    let meta = store
         .upsert_configuration(&id.0, &token, &blob, overwrite)
         .map_err(|e| e.code().to_string())?;
 
     let _ = std::fs::remove_file(&pkg);
-    let meta2 = server
-        .has_configuration(&id.0, &token)
-        .map_err(|e| e.code().to_string())?
-        .unwrap_or(meta.clone());
     Ok(CloudStatus {
         device_id_masked: mask_device_id(&id.0),
         has_configuration: true,
-        sha256: Some(meta2.sha256.clone()),
-        size_bytes: meta2.size_bytes,
-        uploaded_at_ms: meta2.uploaded_at,
+        sha256: Some(meta.sha256.clone()),
+        size_bytes: meta.size_bytes,
+        uploaded_at_ms: meta.uploaded_at,
     })
 }
 
@@ -187,10 +210,9 @@ pub fn cloud_download_restore(
     out_path: String,
 ) -> Result<CloudRestoreDone, String> {
     let id = load_device_id()?;
-    let root = server_root()?;
-    let server = FileServer::new(&root);
-    let token = server.register(&id).map_err(|e| e.code().to_string())?;
-    let blob = server
+    let store = resolve_store()?;
+    let token = register(store.as_ref(), &id)?;
+    let blob = store
         .download_configuration(&id.0, &token, None)
         .map_err(|e| e.code().to_string())?
         .ok_or("no cloud configuration on this device")?;
@@ -218,14 +240,13 @@ pub fn cloud_download_restore(
 #[tauri::command]
 pub fn cloud_delete() -> Result<CloudStatus, String> {
     let id = load_device_id()?;
-    let root = server_root()?;
-    let server = FileServer::new(&root);
-    let token = server.register(&id).map_err(|e| e.code().to_string())?;
-    let _n = server
+    let store = resolve_store()?;
+    let token = register(store.as_ref(), &id)?;
+    let _n = store
         .delete_configuration(&id.0, &token)
         .map_err(|e| e.code().to_string())?;
-    let _ = server.sweep_orphans();
-    let meta = server
+    let _ = store.sweep_orphans(&id.0, &token);
+    let meta = store
         .has_configuration(&id.0, &token)
         .map_err(|e| e.code().to_string())?;
     Ok(CloudStatus {
@@ -237,10 +258,60 @@ pub fn cloud_delete() -> Result<CloudStatus, String> {
     })
 }
 
-/// Run the 24 h orphan-cleanup job (exposed so operators/tests can trigger
-/// it; a real deployment runs it on a server timer).
+// ---- backend management (Settings → Cloud) ---------------------------------
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CloudBackendInfo {
+    pub server_url: Option<String>,
+    pub using_remote: bool,
+}
+
+#[tauri::command]
+pub fn cloud_server_info() -> Result<CloudBackendInfo, String> {
+    let cfg = CloudConfig::load().map_err(|e| e.to_string())?;
+    Ok(CloudBackendInfo {
+        server_url: cfg.server_url.clone(),
+        using_remote: cfg.has_remote(),
+    })
+}
+
+/// Point this device at a remote cloud server (persisted to
+/// `~/.hermes-migrator/config.json`; subsequent cloud commands go remote).
+#[tauri::command]
+pub fn cloud_server_set(url: String) -> Result<CloudBackendInfo, String> {
+    let u = url.trim();
+    if !(u.starts_with("http://") || u.starts_with("https://")) {
+        return Err("server URL must start with http:// or https://".into());
+    }
+    let mut cfg = CloudConfig::load().map_err(|e| e.to_string())?;
+    cfg.server_url = Some(u.to_string());
+    cfg.save().map_err(|e| e.to_string())?;
+    Ok(CloudBackendInfo {
+        server_url: cfg.server_url.clone(),
+        using_remote: true,
+    })
+}
+
+#[tauri::command]
+pub fn cloud_server_clear() -> Result<CloudBackendInfo, String> {
+    let mut cfg = CloudConfig::load().map_err(|e| e.to_string())?;
+    cfg.server_url = None;
+    cfg.save().map_err(|e| e.to_string())?;
+    Ok(CloudBackendInfo {
+        server_url: None,
+        using_remote: false,
+    })
+}
+
+/// Run the 24 h orphan-cleanup job (local backend; remote backends expose
+/// the same via `sweep_orphans`). Exposed so operators/tests can trigger
+/// it; a real deployment runs it on a server timer.
 #[tauri::command]
 pub fn cloud_sweep_orphans() -> Result<u32, String> {
-    let root = server_root()?;
-    Ok(FileServer::new(&root).sweep_orphans())
+    let store = resolve_store()?;
+    let id = load_device_id()?;
+    let token = register(store.as_ref(), &id)?;
+    store
+        .sweep_orphans(&id.0, &token)
+        .map_err(|e| e.code().to_string())
 }

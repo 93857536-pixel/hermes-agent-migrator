@@ -10,6 +10,7 @@ import type {
   ProgressEvt,
   CloudStatus,
   ConnTest,
+  CloudBackendInfo,
   CloudRestoreDone,
   SystemInfo,
   InstallOptions,
@@ -77,6 +78,21 @@ export const cloudDownloadRestore = (passphrase: string, outPath: string) =>
 
 export const cloudDelete = () =>
   invoke<CloudStatus>("cloud_delete").catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+export const cloudServerInfo = () =>
+  invoke<CloudBackendInfo>("cloud_server_info").catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+export const cloudServerSet = (url: string) =>
+  invoke<CloudBackendInfo>("cloud_server_set", { url }).catch((e) =>
+    Promise.reject(toTauriError(e)),
+  );
+
+export const cloudServerClear = () =>
+  invoke<CloudBackendInfo>("cloud_server_clear").catch((e) =>
     Promise.reject(toTauriError(e)),
   );
 

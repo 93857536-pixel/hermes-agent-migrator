@@ -13,6 +13,7 @@ pub mod manifest;
 pub mod pack;
 pub mod pathmapper;
 pub mod platform;
+pub mod remote;
 pub mod restore;
 pub mod scan;
 pub mod secrets;

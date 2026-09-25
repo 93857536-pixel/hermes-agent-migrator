@@ -117,6 +117,9 @@ pub enum CloudError {
     RateLimited,
     /// Client-side: wrong passphrase / corrupted ciphertext.
     DecryptionFailed,
+    /// Transport failure talking to the remote backend (no answer, bad
+    /// status with an unparseable error body, TLS failure).
+    Network,
 }
 
 impl CloudError {
@@ -136,6 +139,48 @@ impl CloudError {
             AuthenticationRequired => "AUTHENTICATION_REQUIRED",
             RateLimited => "RATE_LIMITED",
             DecryptionFailed => "DECRYPTION_FAILED",
+            Network => "NETWORK_ERROR",
+        }
+    }
+
+    /// Parse a stable wire code back into the matching variant. Unknown
+    /// codes fail closed as `Network` (treat as transport-level, never as
+    /// a domain error the caller can reason about).
+    pub fn from_code(s: &str) -> Self {
+        match s {
+            "CONFIGURATION_ALREADY_EXISTS" => Self::ConfigurationAlreadyExists,
+            "CONFIGURATION_NOT_FOUND" => Self::ConfigurationNotFound,
+            "CONFIGURATION_OVERWRITE_NOT_AUTHORIZED" => Self::ConfigurationOverwriteNotAuthorized,
+            "CONFIGURATION_SIZE_LIMIT_EXCEEDED" => Self::ConfigurationSizeLimitExceeded,
+            "CONFIGURATION_UPLOAD_FAILED" => Self::ConfigurationUploadFailed,
+            "CONFIGURATION_DELETE_FAILED" => Self::ConfigurationDeleteFailed,
+            "CONFIGURATION_INTEGRITY_CHECK_FAILED" => Self::ConfigurationIntegrityCheckFailed,
+            "DEVICE_NOT_REGISTERED" => Self::DeviceNotRegistered,
+            "DEVICE_NOT_AUTHORIZED" => Self::DeviceNotAuthorized,
+            "AUTHENTICATION_REQUIRED" => Self::AuthenticationRequired,
+            "RATE_LIMITED" => Self::RateLimited,
+            "DECRYPTION_FAILED" => Self::DecryptionFailed,
+            _ => Self::Network,
+        }
+    }
+
+    /// The HTTP status a compliant server answers with for this error
+    /// (mirrors `docs/cloud-alibaba.md` §7).
+    pub fn http_status(self) -> u16 {
+        use CloudError::*;
+        match self {
+            ConfigurationAlreadyExists => 409,
+            ConfigurationNotFound => 404,
+            ConfigurationOverwriteNotAuthorized => 403,
+            ConfigurationSizeLimitExceeded => 413,
+            ConfigurationUploadFailed
+            | ConfigurationDeleteFailed
+            | ConfigurationIntegrityCheckFailed => 500,
+            DeviceNotRegistered => 404,
+            DeviceNotAuthorized | AuthenticationRequired => 401,
+            RateLimited => 429,
+            DecryptionFailed => 400,
+            Network => 502,
         }
     }
 }
@@ -149,7 +194,7 @@ impl CloudError {
 /// An encrypted configuration blob plus the opaque KDF material the client
 /// must retain to decrypt later. The server stores both fields opaquely and
 /// can never derive the passphrase or plaintext.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct CloudBlob {
     /// KDF salt + Argon2id digest (hex). Needed for decrypt.
     pub kdf: crate::secrets::KdfMeta,

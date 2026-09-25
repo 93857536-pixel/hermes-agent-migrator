@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { nextLang, curLangLabel, useI18n } from "../i18n";
-import { cloudStatus, cloudTestConnection } from "../lib/invoke";
-import { CloudStatus, ConnTest } from "../lib/migrator";
+import {
+  cloudStatus,
+  cloudTestConnection,
+  cloudServerInfo,
+  cloudServerSet,
+  cloudServerClear,
+} from "../lib/invoke";
+import { CloudStatus, ConnTest, CloudBackendInfo } from "../lib/migrator";
 
 /** Settings → Cloud: server status + Test Connection, re-viewable privacy,
  *  security and the first-launch disclaimer. All copy from i18n. */
@@ -14,6 +20,34 @@ export default function Settings() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [backend, setBackend] = useState<CloudBackendInfo | null>(null);
+  const [urlInput, setUrlInput] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    cloudServerInfo().then(setBackend).catch(() => {});
+  }, []);
+
+  const saveServer = async () => {
+    setSaving(true);
+    setErr(null);
+    try {
+      if (urlInput.trim() === "") {
+        const b = await cloudServerClear();
+        setBackend(b);
+      } else {
+        const b = await cloudServerSet(urlInput.trim());
+        setBackend(b);
+      }
+      setUrlInput("");
+      // Refresh the connection panel to reflect the new backend.
+      test();
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const test = async () => {
     setBusy(true);
@@ -62,6 +96,10 @@ export default function Settings() {
               <span>{conn.latency_ms} ms</span>
             </div>
             <div className="kv">
+              <span className="k">{t("cloud.backend")}</span>
+              <span>{conn.backend === "local" ? t("cloud.backend_local") : t("cloud.backend_remote")}</span>
+            </div>
+            <div className="kv">
               <span className="k">{t("settings.device")}</span>
               <span className="mono">{st?.device_id_masked ?? conn.device_id_masked}</span>
             </div>
@@ -72,6 +110,31 @@ export default function Settings() {
           <button className="primary" onClick={test} disabled={busy}>
             {busy ? t("cloud.busy") : t("settings.test_connection")}
           </button>
+        </div>
+
+        {/* Server URL configuration */}
+        <div style={{ marginTop: 12 }}>
+          <div className="kv">
+            <span className="k">{t("settings.server_url")}</span>
+          </div>
+          <input
+            className="mono"
+            type="text"
+            placeholder="https://linminhao.top/hermes-cloud"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            style={{ width: "100%" }}
+          />
+          <p className="help small">{t("settings.server_url_hint")}</p>
+          <div className="row">
+            <button className="ghost" onClick={saveServer} disabled={saving}>
+              {saving
+                ? t("cloud.busy")
+                : urlInput.trim() === ""
+                  ? t("settings.clear_server")
+                  : t("settings.save_server")}
+            </button>
+          </div>
         </div>
       </div>
 
